@@ -1,0 +1,14 @@
+hash: ed69da68ebbad53eb0b4aa517dbb022bc9449d3d0686405b9b9c1011702a63dc
+updated: 2019-05-14T20:43:42.452062756+02:00
+imports:
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/spf13/cobra
+  version: 67fc4837d267bc9bfd6e47f77783fcc3dffc68de
+  subpackages:
+  - cobra
+- name: github.com/spf13/pflag
+  version: 298182f68c66c05229eb03ac171abe6e309ee79a
+- name: pack.ag/amqp
+  version: a69a1d51f8e7b55567f8d190a8fab04503a97735
+testImports: []
