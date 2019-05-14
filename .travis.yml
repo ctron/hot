@@ -7,10 +7,6 @@ matrix:
     - go: "1.11"
       env: LATEST=true
 
-    - os: linux
-    - os: osx
-    - os: windows
-
 before_install:
   - go get github.com/mitchellh/gox
 
