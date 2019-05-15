@@ -23,9 +23,9 @@ deploy:
   api_key:
     secure: "aLI6cHX0dr0Doau5pxbkZOISG7vVX2emaDuL4sYRJ1JPfJfDxuFO5iuNy/UdiZmdZJA5MKBDQhOCdtkJDTdRSw/z+cbRu/+a7/7ajw9qv7WEHvfP6YDsXkwlEbDLtAcM1k/ou2BpNwBZ+vdxIb/uVu8qEOCweWQqSaIZf8ZURqiUsbEQerzsvin1ModVI3anhoKwp5lHVJ7BN4yuDeqDIrW/1sLm9cySfqNfDRCUiwM2kZ/ig+/T+rozPuFJE4ryxQ46zQZfDC24q84v+bG4ILc04SVtWx2MG8kBnG7HyOb91/DZjh/PT1gLCZBJC6/xUgEtuaWhfN68XbG7vduqQ5Y4pojv562APcOdolZmYqeqWsXTCW1aYX1yXVEtClVB+8s+Eq8NYaW5K6ixYA2RWweKGXw+rd1eyhVmSkGYl8rEuQBO6OeypO6j9WKonjxkDf6CvjsOr4qM45fQPXO0mKCHUHuynTgSBmUTw4m1xz4eWezdsgjKrzQ3xkqgzvuka7sylouyVW999p6bouHL6Rscf2fVCY01cepmnwKp8hgrOYyAmRTH/5GTVsG7YolDST+PkDdJFNs3tPdTa/oBsQoFeF8jdwOW1t3BEZtD7RHm232E1rU4BrExcntSmdrqBDrK5rCK4fSTVjfey2slTD8iCSxwmlPtmKZuH8Yc040="
   file:
-    - hot-linux-amd64
-    - hot-darwin-amd64
-    - hot-windows-amd64.exe
+    - /home/travis/hot-linux-amd64
+    - /home/travis/hot-darwin-amd64
+    - /home/travis/hot-windows-amd64.exe
   on:
     repo: ctron/hot
     tags: true
