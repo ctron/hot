@@ -97,7 +97,11 @@ func consume(messageType string, uri string, tenant string) error {
 		return err
 	}
 
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Fatal("Failed to close client:", err)
+		}
+	}()
 
 	var ctx = context.Background()
 
@@ -106,7 +110,11 @@ func consume(messageType string, uri string, tenant string) error {
 		return err
 	}
 
-	defer session.Close(ctx)
+	defer func() {
+		if err := session.Close(ctx); err != nil {
+			log.Fatal("Failed to close session:", err)
+		}
+	}()
 
 	receiver, err := session.NewReceiver(
 		amqp.LinkSourceAddress(fmt.Sprintf("%s/%s", messageType, tenant)),
