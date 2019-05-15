@@ -31,12 +31,12 @@ func consume(messageType string, uri string, tenant string) error {
 	fmt.Printf("Consuming %s from %s ...", messageType, uri)
 	fmt.Println()
 
-	var opts = []amqp.ConnOption{}
+	opts := make([]amqp.ConnOption, 0)
 	if insecure {
-		var tls = &tls.Config{
+		var tlsConfig = &tls.Config{
 			InsecureSkipVerify: true,
 		}
-		opts = append(opts, amqp.ConnTLSConfig(tls))
+		opts = append(opts, amqp.ConnTLSConfig(tlsConfig))
 	}
 
 	client, err := amqp.Dial(uri, opts...)
@@ -64,7 +64,9 @@ func consume(messageType string, uri string, tenant string) error {
 	}
 	defer func() {
 		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-		receiver.Close(ctx)
+		if err := receiver.Close(ctx); err != nil {
+			log.Fatal("Failed to close receiver: ", err)
+		}
 		cancel()
 	}()
 
@@ -89,7 +91,7 @@ func consume(messageType string, uri string, tenant string) error {
 func main() {
 
 	var cmdConsume = &cobra.Command{
-		Use:   "consume [message endpoint]",
+		Use:   "consume [telemetry|event] [message endpoint uri] [tenant]",
 		Short: "Consume and print messages",
 		Long:  `Consume messages from the endpoint and print it on the console.`,
 		Args:  cobra.MinimumNArgs(3),
