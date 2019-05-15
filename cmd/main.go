@@ -20,67 +20,13 @@ import (
 	"log"
 	"time"
 
+	"github.com/ctron/hot/pkg/utils"
+
 	"github.com/spf13/cobra"
 	"pack.ag/amqp"
 )
 
 var insecure bool
-
-func printTitle(title string) {
-	fmt.Println("---------------------------------------------------------")
-	fmt.Println("#", title)
-	fmt.Println("---------------------------------------------------------")
-}
-
-func printEntry(k interface{}, v interface{}) {
-	fmt.Printf("%s => %s", k, v)
-	fmt.Println()
-}
-
-func dumpAnnotations(title string, data map[interface{}]interface{}) {
-	if len(data) > 0 {
-		printTitle(title)
-		for k, v := range data {
-			printEntry(k, v)
-		}
-	}
-}
-
-func dumpProperties(title string, data map[string]interface{}) {
-	if len(data) > 0 {
-		printTitle(title)
-		for k, v := range data {
-			printEntry(k, v)
-		}
-	}
-}
-
-func dumpMessageProperties(p *amqp.MessageProperties) {
-	printTitle("Properties")
-
-	fmt.Println("Content Encoding:", p.ContentEncoding)
-	fmt.Println("Content Type:", p.ContentType)
-	fmt.Println("Message ID:", p.MessageID)
-	fmt.Println("Subject:", p.Subject)
-	fmt.Println("To:", p.To)
-
-}
-
-func dumpMessage(msg *amqp.Message) {
-
-	dumpAnnotations("Annotations", msg.Annotations)
-	dumpAnnotations("Delivery annotations", msg.DeliveryAnnotations)
-
-	dumpMessageProperties(msg.Properties)
-	dumpProperties("Application Properties", msg.ApplicationProperties)
-
-	fmt.Println("---------------------------------------------------------")
-	fmt.Println("Payload")
-	fmt.Println("---------------------------------------------------------")
-	fmt.Printf("%s", msg.GetData())
-	fmt.Println()
-	fmt.Println("=========================================================")
-}
 
 func consume(messageType string, uri string, tenant string) error {
 
@@ -149,7 +95,7 @@ func consume(messageType string, uri string, tenant string) error {
 			return nil
 		}
 
-		dumpMessage(msg)
+		utils.PrintMessage(msg)
 	}
 }
 
@@ -167,10 +113,10 @@ func main() {
 		},
 	}
 
+	cmdConsume.Flags().BoolVar(&insecure, "insecure", false, "Skip TLS validation")
+
 	var rootCmd = &cobra.Command{Use: "hot"}
 	rootCmd.AddCommand(cmdConsume)
-
-	cmdConsume.Flags().BoolVar(&insecure, "insecure", false, "Skip TLS validation")
 
 	if err := rootCmd.Execute(); err != nil {
 		panic(err)
