@@ -32,12 +32,16 @@ func printTitle(title string) {
 	fmt.Println("---------------------------------------------------------")
 }
 
+func printEntry(k interface{}, v interface{}) {
+	fmt.Printf("%s => %s", k, v)
+	fmt.Println()
+}
+
 func dumpAnnotations(title string, data map[interface{}]interface{}) {
 	if len(data) > 0 {
 		printTitle(title)
 		for k, v := range data {
-			fmt.Printf("%s => %s", k, v)
-			fmt.Println()
+			printEntry(k, v)
 		}
 	}
 }
@@ -46,8 +50,7 @@ func dumpProperties(title string, data map[string]interface{}) {
 	if len(data) > 0 {
 		printTitle(title)
 		for k, v := range data {
-			fmt.Printf("%s => %s", k, v)
-			fmt.Println()
+			printEntry(k, v)
 		}
 	}
 }
