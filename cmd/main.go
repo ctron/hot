@@ -22,6 +22,9 @@ import (
 
 var insecure bool
 var contentType string = "text/plain"
+var processCommands bool = false
+var ttd uint32 = 0
+var qos uint8 = 0
 
 func createTlsConfig() *tls.Config {
 	return &tls.Config{
@@ -60,16 +63,28 @@ func main() {
 	}
 
 	cmdPublish.AddCommand(cmdPublishHttp)
-	cmdPublish.Flags().StringVarP(&contentType, "content-type", "t", "text/plain", "content type")
+
+	// publish flags
+
+	cmdPublish.PersistentFlags().StringVar(&contentType, "content-type", "text/plain", "content type")
+
+	// publish http flags
+
+	cmdPublishHttp.Flags().Uint32VarP(&ttd, "ttd", "t", 0, "Wait for command")
+	cmdPublishHttp.Flags().Uint8VarP(&qos, "qos", "q", 0, "Quality of service")
+
+	// consume flags
+
+	cmdConsume.Flags().BoolVarP(&processCommands, "command", "c", false, "Enable commands")
 
 	// root command
 
 	var rootCmd = &cobra.Command{Use: "hot"}
 	rootCmd.AddCommand(cmdConsume, cmdPublish)
 
-	rootCmd.Flags().BoolVar(&insecure, "insecure", false, "Skip TLS validation")
+	rootCmd.PersistentFlags().BoolVar(&insecure, "insecure", false, "Skip TLS validation")
 
 	if err := rootCmd.Execute(); err != nil {
-		panic(err)
+		println(err.Error())
 	}
 }

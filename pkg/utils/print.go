@@ -26,7 +26,7 @@ func PrintTitle(title string) {
 }
 
 func PrintEntry(k interface{}, v interface{}) {
-	fmt.Printf("%s => %s", k, v)
+	fmt.Printf("%s => %[2]v (%[2]T)", k, v)
 	fmt.Println()
 }
 
@@ -59,7 +59,17 @@ func PrintMessageProperties(p *amqp.MessageProperties) {
 
 }
 
+func PrintStart() {
+	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+}
+
+func PrintEnd() {
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+}
+
 func PrintMessage(msg *amqp.Message) {
+
+	PrintStart()
 
 	PrintAnnotations("Annotations", msg.Annotations)
 	PrintAnnotations("Delivery annotations", msg.DeliveryAnnotations)
@@ -67,11 +77,11 @@ func PrintMessage(msg *amqp.Message) {
 	PrintMessageProperties(msg.Properties)
 	PrintProperties("Application Properties", msg.ApplicationProperties)
 
-	fmt.Println("---------------------------------------------------------")
-	fmt.Println("Payload")
-	fmt.Println("---------------------------------------------------------")
+	PrintTitle("Payload")
+
 	fmt.Printf("%s", msg.GetData())
 	fmt.Println()
-	fmt.Println("=========================================================")
+
+	PrintEnd()
 
 }

@@ -18,6 +18,9 @@ import (
 	"fmt"
 	"net/http"
 	neturl "net/url"
+	"strconv"
+
+	"github.com/ctron/hot/pkg/utils"
 )
 
 func publishHttp(messageType string, uri string, tenant string, deviceId string, authId string, password string, contentType string, payload string) error {
@@ -44,6 +47,12 @@ func publishHttp(messageType string, uri string, tenant string, deviceId string,
 
 	request.SetBasicAuth(authId+"@"+tenant, password)
 
+	if qos > 0 {
+		request.Header.Set("QoS-Level", strconv.Itoa(int(qos)))
+	}
+	if ttd > 0 {
+		request.Header.Set("hono-ttd", strconv.FormatUint(uint64(ttd), 10))
+	}
 	request.Header.Set("Content-Type", contentType)
 
 	response, err := client.Do(request)
@@ -59,7 +68,22 @@ func publishHttp(messageType string, uri string, tenant string, deviceId string,
 		return err
 	}
 
-	fmt.Println(body.String())
+	utils.PrintStart()
+
+	utils.PrintTitle("Headers")
+	for k, v := range response.Header {
+		if len(v) == 1 {
+			utils.PrintEntry(k, v[0])
+		} else {
+			utils.PrintEntry(k, v)
+		}
+	}
+
+	if body.Len() > 0 {
+		utils.PrintTitle("Payload")
+		fmt.Println(body.String())
+	}
+	utils.PrintEnd()
 
 	if err := response.Body.Close(); err != nil {
 		fmt.Printf("Failed to close response: %v", err)

@@ -88,5 +88,34 @@ func consume(messageType string, uri string, tenant string) error {
 		}
 
 		utils.PrintMessage(msg)
+		if processCommands {
+			processCommand(msg)
+		}
 	}
+}
+
+func processCommand(msg *amqp.Message) {
+	ttd, ok := msg.ApplicationProperties["ttd"].(int32)
+
+	if !ok {
+		return
+	}
+
+	if ttd < 0 {
+		return
+	}
+
+	reader := &StdinCommandReader{}
+
+	fmt.Printf("Enter command response (%v s): ", ttd)
+
+	cmd := reader.ReadCommand(time.Duration(ttd) * time.Second)
+
+	if cmd == nil {
+		fmt.Print("Timeout!")
+		fmt.Println()
+		return
+	}
+
+	// FIXME: implement
 }
