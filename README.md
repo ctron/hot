@@ -6,7 +6,14 @@ This is a simple command line tool for testing Eclipse Hono™.
 
     hot consume telemetry amqps://my.server:443 tenant
 
-You can use `--insecure` in case you want to skip TLS verification.
+You can use the following flags:
+
+<dl>
+
+<dt><code>--insecure</code></dt>
+<dd>Skip the TLS verification.</dd>
+
+</dl>
 
 ## Publish an HTTP message
 
