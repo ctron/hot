@@ -46,11 +46,12 @@ func (_ *StdinCommandReader) ReadCommand(timeout time.Duration) *string {
 
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
-		line, err := reader.ReadString('\n')
+		line, _, err := reader.ReadLine()
+		sline := string(line)
 		if err != nil {
 			e <- err
 		} else {
-			s <- line
+			s <- sline
 		}
 		close(s)
 		close(e)
