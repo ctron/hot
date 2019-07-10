@@ -76,6 +76,7 @@ func PrintMessage(msg *amqp.Message) {
 
 	PrintMessageProperties(msg.Properties)
 	PrintProperties("Application Properties", msg.ApplicationProperties)
+	PrintAnnotations("Footer", msg.Footer)
 
 	PrintTitle("Payload")
 

@@ -17,13 +17,36 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/ctron/hot/pkg/command"
 
 	"github.com/google/uuid"
 
 	"github.com/ctron/hot/pkg/utils"
 	"pack.ag/amqp"
 )
+
+func createCommandReader() command.Reader {
+	switch strings.ToLower(commandReader) {
+	case "prefill":
+		return &command.PreFillReader{
+			Prompt:  os.Stdout,
+			Stream:  os.Stdin,
+			Encoder: getEncoder(),
+		}
+	case "ondemand":
+		return &command.OnDemandReader{
+			Prompt:  os.Stdout,
+			Stream:  os.Stdin,
+			Encoder: getEncoder(),
+		}
+	default:
+		panic(fmt.Errorf("unknown command reader: %s", commandReader))
+	}
+}
 
 func consume(messageType string, uri string, tenant string) error {
 
@@ -77,6 +100,19 @@ func consume(messageType string, uri string, tenant string) error {
 	fmt.Printf("Consumer running, press Ctrl+C to stop...")
 	fmt.Println()
 
+	// set up command reader
+
+	reader := createCommandReader()
+	if err := reader.Start(); err != nil {
+		return err
+	}
+	defer func() {
+		if err := reader.Stop(); err != nil {
+		}
+	}()
+
+	// run loop
+
 	for {
 		// Receive next message
 		msg, err := receiver.Receive(ctx)
@@ -91,14 +127,14 @@ func consume(messageType string, uri string, tenant string) error {
 
 		utils.PrintMessage(msg)
 		if processCommands {
-			if err := processCommand(session, tenant, msg); err != nil {
+			if err := processCommand(session, reader, tenant, msg); err != nil {
 				log.Print("Failed to send command: ", err)
 			}
 		}
 	}
 }
 
-func processCommand(session *amqp.Session, tenant string, msg *amqp.Message) error {
+func processCommand(session *amqp.Session, reader command.Reader, tenant string, msg *amqp.Message) error {
 	ttd, ok := msg.ApplicationProperties["ttd"].(int32)
 
 	if !ok {
@@ -114,11 +150,10 @@ func processCommand(session *amqp.Session, tenant string, msg *amqp.Message) err
 		return nil
 	}
 
-	reader := &StdinCommandReader{}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(ttd)*time.Second)
+	defer cancel()
 
-	fmt.Printf("Enter command response (%v s): ", ttd)
-
-	cmd := reader.ReadCommand(time.Duration(ttd) * time.Second)
+	cmd := reader.Read(ctx, deviceId)
 
 	if cmd == nil {
 		fmt.Print("Timeout!")
@@ -144,12 +179,21 @@ func processCommand(session *amqp.Session, tenant string, msg *amqp.Message) err
 		}
 	}()
 
+	// prepare payload
+	var payload []byte
+	if cmd.Payload == nil {
+		payload = make([]byte, 0)
+	} else {
+		payload = cmd.Payload.Bytes()
+	}
+
 	// prepare message
 
-	send := amqp.NewMessage([]byte(*cmd))
+	send := amqp.NewMessage(payload)
 	send.Properties = &amqp.MessageProperties{
-		Subject: "CMD",
-		To:      "control/" + tenant + "/" + deviceId,
+		Subject:     cmd.Command,
+		ContentType: cmd.ContentType,
+		To:          "control/" + tenant + "/" + deviceId,
 	}
 
 	// set message id
@@ -162,7 +206,7 @@ func processCommand(session *amqp.Session, tenant string, msg *amqp.Message) err
 
 	// send message
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := sender.Send(ctx, send); err != nil {

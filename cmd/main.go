@@ -17,11 +17,14 @@ import (
 	"crypto/tls"
 	"log"
 
+	"github.com/ctron/hot/pkg/encoding"
+
 	"github.com/spf13/cobra"
 )
 
 var insecure bool
-var contentType string = "text/plain"
+var contentTypeFlag string = "text/plain"
+var commandReader string = ""
 var processCommands bool = false
 var ttd uint32 = 0
 var qos uint8 = 0
@@ -30,6 +33,10 @@ func createTlsConfig() *tls.Config {
 	return &tls.Config{
 		InsecureSkipVerify: insecure,
 	}
+}
+
+func getEncoder() encoding.PayloadEncoder {
+	return encoding.CreateEncoder(contentTypeFlag)
 }
 
 func main() {
@@ -56,7 +63,14 @@ func main() {
 		Short: "Publish via HTTP",
 		Args:  cobra.ExactArgs(7),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := publishHttp(args[0], args[1], args[2], args[3], args[4], args[5], contentType, args[6]); err != nil {
+			if err := publishHttp(HttpPublishInformation{
+				MessageType:      args[0],
+				URI:              args[1],
+				Tenant:           args[2],
+				DeviceId:         args[3],
+				AuthenticationId: args[4],
+				Password:         args[5],
+			}, getEncoder(), args[6]); err != nil {
 				log.Fatal("Failed to publish via HTTP:", err)
 			}
 		},
@@ -66,25 +80,25 @@ func main() {
 
 	// publish flags
 
-	cmdPublish.PersistentFlags().StringVar(&contentType, "content-type", "text/plain", "content type")
-
 	// publish http flags
 
-	cmdPublishHttp.Flags().Uint32VarP(&ttd, "ttd", "t", 0, "Wait for command")
+	cmdPublishHttp.Flags().Uint32VarP(&ttd, "ttd", "c", 0, "Wait for command")
 	cmdPublishHttp.Flags().Uint8VarP(&qos, "qos", "q", 0, "Quality of service")
 
 	// consume flags
 
 	cmdConsume.Flags().BoolVarP(&processCommands, "command", "c", false, "Enable commands")
+	cmdConsume.Flags().StringVarP(&commandReader, "reader", "r", "prefill", "Command reader type (possible values: [ondemand, prefill]")
 
 	// root command
 
-	var rootCmd = &cobra.Command{Use: "hot"}
-	rootCmd.AddCommand(cmdConsume, cmdPublish)
+	var cmdRoot = &cobra.Command{Use: "hot"}
+	cmdRoot.AddCommand(cmdConsume, cmdPublish)
 
-	rootCmd.PersistentFlags().BoolVar(&insecure, "insecure", false, "Skip TLS validation")
+	cmdRoot.PersistentFlags().StringVarP(&contentTypeFlag, "content-type", "t", "text/plain", "Content type of the payload, may be a MIME type or 'hex'")
+	cmdRoot.PersistentFlags().BoolVar(&insecure, "insecure", false, "Skip TLS validation")
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := cmdRoot.Execute(); err != nil {
 		println(err.Error())
 	}
 }

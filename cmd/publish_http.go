@@ -20,20 +20,34 @@ import (
 	neturl "net/url"
 	"strconv"
 
+	"github.com/ctron/hot/pkg/encoding"
 	"github.com/ctron/hot/pkg/utils"
 )
 
-func publishHttp(messageType string, uri string, tenant string, deviceId string, authId string, password string, contentType string, payload string) error {
+type HttpPublishInformation struct {
+	MessageType string
+	URI         string
+	Tenant      string
+	DeviceId    string
 
-	url, err := neturl.Parse(uri)
+	AuthenticationId string
+	Password         string
+}
+
+func publishHttp(info HttpPublishInformation, encoder encoding.PayloadEncoder, payload string) error {
+
+	url, err := neturl.Parse(info.URI)
 	if err != nil {
 		return err
 	}
 
-	url.Path = url.Path + neturl.PathEscape(messageType) + "/" + neturl.PathEscape(tenant) + "/" + deviceId
+	url.Path = url.Path + neturl.PathEscape(info.MessageType) + "/" + neturl.PathEscape(info.Tenant) + "/" + info.DeviceId
 	fmt.Println("URL:", url)
 
-	buf := bytes.NewBufferString(payload)
+	buf, err := encoder.Encode(payload)
+	if err != nil {
+		return err
+	}
 
 	tr := &http.Transport{
 		TLSClientConfig: createTlsConfig(),
@@ -45,7 +59,7 @@ func publishHttp(messageType string, uri string, tenant string, deviceId string,
 		return err
 	}
 
-	request.SetBasicAuth(authId+"@"+tenant, password)
+	request.SetBasicAuth(info.AuthenticationId+"@"+info.Tenant, info.Password)
 
 	if qos > 0 {
 		request.Header.Set("QoS-Level", strconv.Itoa(int(qos)))
@@ -53,7 +67,7 @@ func publishHttp(messageType string, uri string, tenant string, deviceId string,
 	if ttd > 0 {
 		request.Header.Set("hono-ttd", strconv.FormatUint(uint64(ttd), 10))
 	}
-	request.Header.Set("Content-Type", contentType)
+	request.Header.Set("Content-Type", encoder.GetMimeType())
 
 	response, err := client.Do(request)
 	if err != nil {
