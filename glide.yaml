@@ -1,8 +1,0 @@
-package: github.com/ctron/hot
-import:
-  - package: pack.ag/amqp
-    version: ^0.11.0
-  - package: github.com/spf13/cobra/cobra
-  - package: github.com/spf13/pflag
-  - package: github.com/google/uuid
-    version: ^1
