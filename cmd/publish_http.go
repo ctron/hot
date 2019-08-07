@@ -25,13 +25,9 @@ import (
 )
 
 type HttpPublishInformation struct {
-	MessageType string
-	URI         string
-	Tenant      string
-	DeviceId    string
+	CommonPublishInformation
 
-	AuthenticationId string
-	Password         string
+	QoS uint8
 }
 
 func publishHttp(info HttpPublishInformation, encoder encoding.PayloadEncoder, payload string) error {
@@ -59,7 +55,7 @@ func publishHttp(info HttpPublishInformation, encoder encoding.PayloadEncoder, p
 		return err
 	}
 
-	request.SetBasicAuth(info.AuthenticationId+"@"+info.Tenant, info.Password)
+	request.SetBasicAuth(info.Username(), info.Password)
 
 	if qos > 0 {
 		request.Header.Set("QoS-Level", strconv.Itoa(int(qos)))

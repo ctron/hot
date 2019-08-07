@@ -64,19 +64,44 @@ func main() {
 		Args:  cobra.ExactArgs(7),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := publishHttp(HttpPublishInformation{
-				MessageType:      args[0],
-				URI:              args[1],
-				Tenant:           args[2],
-				DeviceId:         args[3],
-				AuthenticationId: args[4],
-				Password:         args[5],
+				CommonPublishInformation: CommonPublishInformation{
+					MessageType:      args[0],
+					URI:              args[1],
+					Tenant:           args[2],
+					DeviceId:         args[3],
+					AuthenticationId: args[4],
+					Password:         args[5],
+				},
+				QoS: qos,
 			}, getEncoder(), args[6]); err != nil {
 				log.Fatal("Failed to publish via HTTP:", err)
 			}
 		},
 	}
 
+	cmdPublishMqtt := &cobra.Command{
+		Use:   "mqtt [telemetry|event] [mqtt endpoint uri] [tenant] [deviceId] [authId] [password] [payload]",
+		Short: "Publish via MQTT",
+		Args:  cobra.ExactArgs(7),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := publishMqtt(MqttPublishInformation{
+				CommonPublishInformation: CommonPublishInformation{
+					MessageType:      args[0],
+					URI:              args[1],
+					Tenant:           args[2],
+					DeviceId:         args[3],
+					AuthenticationId: args[4],
+					Password:         args[5],
+				},
+				QoS: qos,
+			}, getEncoder(), args[6]); err != nil {
+				log.Fatal("Failed to publish via MQTT:", err)
+			}
+		},
+	}
+
 	cmdPublish.AddCommand(cmdPublishHttp)
+	cmdPublish.AddCommand(cmdPublishMqtt)
 
 	// publish flags
 
@@ -84,6 +109,10 @@ func main() {
 
 	cmdPublishHttp.Flags().Uint32VarP(&ttd, "ttd", "c", 0, "Wait for command")
 	cmdPublishHttp.Flags().Uint8VarP(&qos, "qos", "q", 0, "Quality of service")
+
+	// publish mqtt flags
+
+	cmdPublishMqtt.Flags().Uint8VarP(&qos, "qos", "q", 0, "Quality of service")
 
 	// consume flags
 
