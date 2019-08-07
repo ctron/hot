@@ -28,7 +28,7 @@ The following flags are supported:
 <dl>
 
 <dt><code>--qos</code></dt>
-<dd>Set the "Quality of Service". Defaults to `0`.</dd>
+<dd>Set the "Quality of Service". Defaults to <code>0</code>.</dd>
 
 <dt><code>--ttd</code></dt>
 <dd>Set the "time till disconnect", the amount of seconds the HTTP call will
@@ -47,7 +47,7 @@ The following flags are supported:
 <dl>
 
 <dt><code>--qos</code></dt>
-<dd>Set the "Quality of Service". Defaults to `0`.</dd>
+<dd>Set the "Quality of Service". Defaults to <code>0</code>.</dd>
 
 </dl>
 
