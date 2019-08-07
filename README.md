@@ -1,4 +1,4 @@
-# HoT - Hono Test [![GitHub release](https://img.shields.io/github/release/ctron/hot.svg)](https://github.com/ctron/hot/releases)
+# HoT – Hono Test [![GitHub release](https://img.shields.io/github/release/ctron/hot.svg)](https://github.com/ctron/hot/releases)
 
 This is a simple command line tool for testing Eclipse Hono™.
 
