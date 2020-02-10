@@ -86,8 +86,6 @@ func consume(messageType string, uri string, tenant string) error {
   	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
-   
-	opts := make([]amqp.ConnOption, 0)
 	
 	//Enable TLS
 	if insecure {
