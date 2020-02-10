@@ -12,8 +12,17 @@ You can use the following flags:
 
 <dl>
 
-<dt><code>--insecure</code></dt>
-<dd>Skip the TLS verification.</dd>
+<dt><code>--tlsConfig</code></dt>
+<dd>0: To Skip the TLS verification. (Default)</dd>
+<dd>1: To enable insecure TLS connection.</dd>
+<dd>2: To enable secure TLS connection.</dd>
+<dt><code>--tlsPath</code></dt>
+<dd>Set to path of trusted store file </dd>
+<dt><code>--clientUsername</code></dt>
+<dd>Tenant Username (If Applicaple)</dd>
+<dt><code>--clientPassword</code></dt>
+<dd>Tenant Password (If Applicaple)</dd>
+
 
 </dl>
 

@@ -27,9 +27,6 @@ import (
 
 	"github.com/ctron/hot/pkg/utils"
 	"pack.ag/amqp"
-	"crypto/x509"
-	"crypto/tls"
-	"io/ioutil"
 )
 
 func createCommandReader() command.Reader {
@@ -58,46 +55,13 @@ func consume(messageType string, uri string, tenant string) error {
 
 	opts := make([]amqp.ConnOption, 0)
 
-	//Enable TLS
-	if insecure {
+	//Enable TLS if required
+	if tlsConfig != 0 {
 		opts = append(opts, amqp.ConnTLSConfig(createTlsConfig()))
-	}else{
-		//Read cert from local TLS file 
-    	    	caCert, err := ioutil.ReadFile("tls.crt")       
-	    	if err != nil {
-		    	   log.Fatal(err)
-    	  	}
-	    	caCertPool := x509.NewCertPool()
-    		caCertPool.AppendCertsFromPEM(caCert)
-
-		opts = append(opts, amqp.ConnTLSConfig(&tls.Config{
-			RootCAs: caCertPool,
-		}))
 	}
-
-	//Enable Client credentials
-	if(clientUsername != ""  && clientPassword !=""){
-		opts = append(opts, amqp.ConnSASLPlain(clientUsername, clientPassword))
-	}
-
-	caCert, err := ioutil.ReadFile("tls.crt")       
-	if err != nil {
-		   log.Fatal(err)
-  	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
 	
-	//Enable TLS
-	if insecure {
-		opts = append(opts, amqp.ConnTLSConfig(createTlsConfig()))
-	}else{
-		opts = append(opts, amqp.ConnTLSConfig(&tls.Config{
-			RootCAs: caCertPool,
-		}))
-	}
-
-	//Enable Client credentials
-	if(clientUsername != ""  && clientPassword !=""){
+	//Enable Client credentials if avaliable
+	if(clientUsername != "" && clientPassword !=""){
 		opts = append(opts, amqp.ConnSASLPlain(clientUsername, clientPassword))
 	}
 

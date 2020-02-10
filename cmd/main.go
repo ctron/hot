@@ -15,15 +15,19 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+	"errors"
 	"log"
+	"strconv"
 
 	"github.com/ctron/hot/pkg/encoding"
 
 	"github.com/spf13/cobra"
 )
 
-var insecure bool
-var tlsRoute string = ""
+var tlsConfig int = 0
+var tlsPath string = ""
 var clientUsername string = ""
 var clientPassword string = ""
 var contentTypeFlag string = "text/plain"
@@ -33,8 +37,23 @@ var ttd uint32 = 0
 var qos uint8 = 0
 
 func createTlsConfig() *tls.Config {
-	return &tls.Config{
-		InsecureSkipVerify: insecure,
+	//Insecure TLS 
+	if tlsConfig == 1 {
+		return &tls.Config{
+			InsecureSkipVerify:true,
+		}
+	//Secure TLS
+	} else{
+		caCert, err := ioutil.ReadFile(tlsPath)   	
+			if err != nil {
+				log.Fatal(err)
+			}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+	
+		return &tls.Config{
+			RootCAs: caCertPool,
+		}
 	}
 }
 
@@ -48,10 +67,19 @@ func main() {
 		Use:   "consume [telemetry|event] [message endpoint uri] [tenant]",
 		Short: "Consume and print messages",
 		Long:  `Consume messages from the endpoint and print it on the console.`,
-		Args:  cobra.ExactArgs(3),
+		Args: func(cmd *cobra.Command, args []string) error { 
+			cobra.ExactArgs(3)
+			if len(args) != 3{
+				return errors.New("Wrong number of Input arguments expected 3 got "+strconv.Itoa(len(args)))
+			}
+			if (tlsConfig < 0 || tlsConfig > 2) {
+				return errors.New("Invalid tlsConfig flag: " + strconv.Itoa(tlsConfig))
+			}
+			return nil; 
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := consume(args[0], args[1], args[2]); err != nil {
-				log.Fatal("Failed to consume messages:", err)
+				log.Fatal("Failed to consume messages: ", err)
 			}
 		},
 	}
@@ -121,17 +149,16 @@ func main() {
 
 	cmdConsume.Flags().BoolVarP(&processCommands, "command", "c", false, "Enable commands")
 	cmdConsume.Flags().StringVarP(&commandReader, "reader", "r", "prefill", "Command reader type (possible values: [ondemand, prefill]")
-
+	cmdConsume.Flags().StringVarP(&clientUsername,"clientUsername","u","","Tenant username")
+	cmdConsume.Flags().StringVarP(&clientPassword,"clientPassword","p","","Tenant password")
 	// root command
 
 	var cmdRoot = &cobra.Command{Use: "hot"}
 	cmdRoot.AddCommand(cmdConsume, cmdPublish)
 
 	cmdRoot.PersistentFlags().StringVarP(&contentTypeFlag, "content-type", "t", "text/plain", "Content type of the payload, may be a MIME type or 'hex'")
-	cmdRoot.PersistentFlags().BoolVar(&insecure, "insecure", false, "Skip TLS validation")
-	cmdRoot.PersistentFlags().StringVarP(&tlsRoute,"tlsPath","T","","Absolute path to cert file")
-	cmdRoot.PersistentFlags().StringVarP(&clientUsername,"clientUsername","U","","hono client username")
-	cmdRoot.PersistentFlags().StringVarP(&clientPassword,"clientPassword","P","","hono client password")
+	cmdRoot.PersistentFlags().IntVarP(&tlsConfig, "tlsConfig","C", 0, "0:(Default)no TLS 1:Insecure TLS connection 2:Secure TLS connection ")
+	cmdRoot.PersistentFlags().StringVarP(&tlsPath,"tlsPath","P","","Absolute path to cert file")
 
 	if err := cmdRoot.Execute(); err != nil {
 		println(err.Error())
