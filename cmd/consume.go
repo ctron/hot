@@ -56,7 +56,29 @@ func consume(messageType string, uri string, tenant string) error {
 	fmt.Printf("Consuming %s from %s ...", messageType, uri)
 	fmt.Println()
 
-	//Read cert from local TLS file 
+	opts := make([]amqp.ConnOption, 0)
+
+	//Enable TLS
+	if insecure {
+		opts = append(opts, amqp.ConnTLSConfig(createTlsConfig()))
+	}else{
+		//Read cert from local TLS file 
+    	    	caCert, err := ioutil.ReadFile("tls.crt")       
+	    	if err != nil {
+		    	   log.Fatal(err)
+    	  	}
+	    	caCertPool := x509.NewCertPool()
+    		caCertPool.AppendCertsFromPEM(caCert)
+
+		opts = append(opts, amqp.ConnTLSConfig(&tls.Config{
+			RootCAs: caCertPool,
+		}))
+	}
+
+	//Enable Client credentials
+	if(clientUsername != ""  && clientPassword !=""){
+		opts = append(opts, amqp.ConnSASLPlain(clientUsername, clientPassword))
+	}
 
 	caCert, err := ioutil.ReadFile("tls.crt")       
 	if err != nil {
