@@ -129,7 +129,7 @@ func main() {
 
 	cmdRoot.PersistentFlags().StringVarP(&contentTypeFlag, "content-type", "t", "text/plain", "Content type of the payload, may be a MIME type or 'hex'")
 	cmdRoot.PersistentFlags().BoolVar(&insecure, "insecure", false, "Skip TLS validation")
-	cmdRoot.PersistentFlags().StringVarP(&tlsRoute,"tlsPath","T","","Directory path for cert file")
+	cmdRoot.PersistentFlags().StringVarP(&tlsRoute,"tlsPath","T","","Absolute path to cert file")
 	cmdRoot.PersistentFlags().StringVarP(&clientUsername,"clientUsername","U","","hono client username")
 	cmdRoot.PersistentFlags().StringVarP(&clientPassword,"clientPassword","P","","hono client password")
 
