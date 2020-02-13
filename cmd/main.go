@@ -11,6 +11,8 @@
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 
+ //./hot consume telemetry amqps://messaging-8lxzny44dx-enmasse-infra.apps.astoycos-ocp.shiftstack.com:443 myapp.iot --tlsConfig=2 --tlsPath=tls.crt --clientUsername=consumer --clientPassword=foobar
+
 package main
 
 import (
@@ -25,8 +27,8 @@ import (
 
 	"github.com/spf13/cobra"
 )
-
-var tlsConfig int = 0
+var tlsConn bool
+var insecure bool
 var tlsPath string = ""
 var clientUsername string = ""
 var clientPassword string = ""
@@ -38,7 +40,7 @@ var qos uint8 = 0
 
 func createTlsConfig() *tls.Config {
 	//Insecure TLS 
-	if tlsConfig == 1 {
+	if (tlsConn && insecure){
 		return &tls.Config{
 			InsecureSkipVerify:true,
 		}
@@ -72,8 +74,8 @@ func main() {
 			if len(args) != 3{
 				return errors.New("Wrong number of Input arguments expected 3 got "+strconv.Itoa(len(args)))
 			}
-			if (tlsConfig < 0 || tlsConfig > 2) {
-				return errors.New("Invalid tlsConfig flag: " + strconv.Itoa(tlsConfig))
+			if (tlsConn == false && insecure == true) {
+				return errors.New("Cannot have an insecure TLS connection without TLS enabled")
 			}
 			return nil; 
 		},
@@ -157,7 +159,8 @@ func main() {
 	cmdRoot.AddCommand(cmdConsume, cmdPublish)
 
 	cmdRoot.PersistentFlags().StringVarP(&contentTypeFlag, "content-type", "t", "text/plain", "Content type of the payload, may be a MIME type or 'hex'")
-	cmdRoot.PersistentFlags().IntVarP(&tlsConfig, "tlsConfig","C", 0, "0:(Default)no TLS 1:Insecure TLS connection 2:Secure TLS connection ")
+	cmdRoot.PersistentFlags().BoolVarP(&tlsConn,"tlsConn","T",false,"Set to true to enable a secure TLS connection")
+	cmdRoot.PersistentFlags().BoolVarP(&insecure,"insecure","I",false,"Set to true to enable insecure TLS connection")
 	cmdRoot.PersistentFlags().StringVarP(&tlsPath,"tlsPath","P","","Absolute path to cert file")
 
 	if err := cmdRoot.Execute(); err != nil {
