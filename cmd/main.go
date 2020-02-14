@@ -11,8 +11,6 @@
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 
- //./hot consume telemetry amqps://messaging-8lxzny44dx-enmasse-infra.apps.astoycos-ocp.shiftstack.com:443 myapp.iot --tlsConfig=2 --tlsPath=tls.crt --clientUsername=consumer --clientPassword=foobar
-
 package main
 
 import (
