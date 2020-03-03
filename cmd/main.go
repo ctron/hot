@@ -20,12 +20,11 @@ import (
 	"errors"
 	"log"
 	"strconv"
-
 	"github.com/ctron/hot/pkg/encoding"
-
+	
 	"github.com/spf13/cobra"
 )
-var tlsConn bool
+
 var insecure bool
 var tlsPath string = ""
 var clientUsername string = ""
@@ -36,14 +35,10 @@ var processCommands bool = false
 var ttd uint32 = 0
 var qos uint8 = 0
 
+//Only called for amqps connections
 func createTlsConfig() *tls.Config {
-	//Insecure TLS 
-	if (tlsConn && insecure){
-		return &tls.Config{
-			InsecureSkipVerify:true,
-		}
-	//Secure TLS
-	} else{
+	//Secure TLS if --insecure=false and --tlsPath is not empty
+	if (!insecure && tlsPath != ""){
 		caCert, err := ioutil.ReadFile(tlsPath)   	
 			if err != nil {
 				log.Fatal(err)
@@ -54,6 +49,12 @@ func createTlsConfig() *tls.Config {
 		return &tls.Config{
 			RootCAs: caCertPool,
 		}
+	//InSecure TLS if --insecure=true or if --tlsPath is empty
+	} else{
+		return &tls.Config{
+			InsecureSkipVerify:true,
+		}
+	
 	}
 }
 
@@ -72,9 +73,16 @@ func main() {
 			if len(args) != 3{
 				return errors.New("Wrong number of Input arguments expected 3 got "+strconv.Itoa(len(args)))
 			}
-			if (tlsConn == false && insecure == true) {
+			if (args[1][0:5] != "amqps" && insecure) {
 				return errors.New("Cannot have an insecure TLS connection without TLS enabled")
 			}
+			if (args[1][0:5] != "amqps" && tlsPath != "") {
+				return errors.New("Cannot have a TLS cert without TLS enabled " )
+			}
+			if (args[1][0:5] == "amqps" && tlsPath == "" && !insecure) {
+				return errors.New("Cannot have a TLS enabled connection that is neither secured with a cert nor Insecure: Please set either --tlsPath or --insecure" )
+			}
+
 			return nil; 
 		},
 		Run: func(cmd *cobra.Command, args []string) {
@@ -151,13 +159,13 @@ func main() {
 	cmdConsume.Flags().StringVarP(&commandReader, "reader", "r", "prefill", "Command reader type (possible values: [ondemand, prefill]")
 	cmdConsume.Flags().StringVarP(&clientUsername,"clientUsername","u","","Tenant username")
 	cmdConsume.Flags().StringVarP(&clientPassword,"clientPassword","p","","Tenant password")
+	
 	// root command
 
 	var cmdRoot = &cobra.Command{Use: "hot"}
 	cmdRoot.AddCommand(cmdConsume, cmdPublish)
 
 	cmdRoot.PersistentFlags().StringVarP(&contentTypeFlag, "content-type", "t", "text/plain", "Content type of the payload, may be a MIME type or 'hex'")
-	cmdRoot.PersistentFlags().BoolVarP(&tlsConn,"tlsConn","T",false,"Set to true to enable a secure TLS connection")
 	cmdRoot.PersistentFlags().BoolVarP(&insecure,"insecure","I",false,"Set to true to enable insecure TLS connection")
 	cmdRoot.PersistentFlags().StringVarP(&tlsPath,"tlsPath","P","","Absolute path to cert file")
 
