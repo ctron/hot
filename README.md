@@ -8,13 +8,11 @@ Fill in your connection information, and then execute the following command:
 
     hot consume telemetry amqps://my.server:443 tenant
 
-You can use the following flags:
+You can use the following flags to configure the connection:
 
 <dl>
 
-<dt><code>--tlsConn</code></dt>
-<dd>Set to true to enable secure TLS connection</dd>
-<dd>Set to false for no TLS connection(default)</dd>
+
 <dt><code>--insecure</code></dt>
 <dd>Set to true to enable Insecure TLS connection</dd>
 <dt><code>--tlsPath</code></dt>
