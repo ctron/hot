@@ -55,8 +55,9 @@ func consume(messageType string, uri string, tenant string) error {
 
 	opts := make([]amqp.ConnOption, 0)
 
-	//Enable TLS if required
-	if (uri[0:5] == "amqps") {
+	//Enable TLS if url is secure, and as long as either insecure or tlsPath are set
+	//If neither flag is set, default to AMQP library default
+	if (uri[0:5] == "amqps" && (insecure || tlsPath != "")) {
 		opts = append(opts, amqp.ConnTLSConfig(createTlsConfig()))
 	}
 	

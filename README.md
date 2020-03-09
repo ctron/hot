@@ -8,7 +8,7 @@ Fill in your connection information, and then execute the following command:
 
     hot consume telemetry amqps://my.server:443 tenant
 
-You can use the following flags to configure the connection:
+You can optionally use the following flags to configure the connection:
 
 <dl>
 
@@ -18,10 +18,11 @@ You can use the following flags to configure the connection:
 <dt><code>--tlsPath</code></dt>
 <dd>Set to path of trusted store file </dd>
 <dt><code>--clientUsername</code></dt>
-<dd>Tenant Username (If Applicaple)</dd>
+<dd>Tenant Username</dd>
 <dt><code>--clientPassword</code></dt>
-<dd>Tenant Password (If Applicaple)</dd>
+<dd>Tenant Password</dd>
 
+*NOTE: if neither --insecure nor --tlsPath are set the AMQP client TLS default is used
 
 </dl>
 

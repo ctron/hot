@@ -49,8 +49,8 @@ func createTlsConfig() *tls.Config {
 		return &tls.Config{
 			RootCAs: caCertPool,
 		}
-	//InSecure TLS if --insecure=true or if --tlsPath is empty
-	} else{
+	//Connection always insecure if --insecure=true
+	} else {
 		return &tls.Config{
 			InsecureSkipVerify:true,
 		}
@@ -78,9 +78,6 @@ func main() {
 			}
 			if (args[1][0:5] != "amqps" && tlsPath != "") {
 				return errors.New("Cannot have a TLS cert without TLS enabled " )
-			}
-			if (args[1][0:5] == "amqps" && tlsPath == "" && !insecure) {
-				return errors.New("Cannot have a TLS enabled connection that is neither secured with a cert nor Insecure: Please set either --tlsPath or --insecure" )
 			}
 
 			return nil; 
