@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc
+ * Copyright (c) 2019, 2020 Red Hat Inc
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -16,8 +16,8 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"errors"
+	"io/ioutil"
 	"log"
 	"strconv"
 
@@ -25,35 +25,47 @@ import (
 
 	"github.com/spf13/cobra"
 )
-var tlsConn bool
+
 var insecure bool
-var tlsPath string = ""
+var cert string = ""
 var clientUsername string = ""
 var clientPassword string = ""
 var contentTypeFlag string = "text/plain"
 var commandReader string = ""
 var processCommands bool = false
+var disableTlsNegotiation bool = false
 var ttd uint32 = 0
 var qos uint8 = 0
 
 func createTlsConfig() *tls.Config {
-	//Insecure TLS 
-	if (tlsConn && insecure){
+
+	if insecure {
+		// Insecure TLS
 		return &tls.Config{
-			InsecureSkipVerify:true,
+			InsecureSkipVerify: true,
 		}
-	//Secure TLS
-	} else{
-		caCert, err := ioutil.ReadFile(tlsPath)   	
-			if err != nil {
-				log.Fatal(err)
-			}
+	}
+
+	// secure configuration
+
+	var caCertPool *x509.CertPool
+	if cert != "" {
+
+		// we have a custom cert pool
+
+		caCert, err := ioutil.ReadFile(cert)
+		if err != nil {
+			log.Fatal(err)
+		}
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
-	
-		return &tls.Config{
-			RootCAs: caCertPool,
-		}
+
+	}
+
+	// return result
+
+	return &tls.Config{
+		RootCAs: caCertPool,
 	}
 }
 
@@ -67,15 +79,12 @@ func main() {
 		Use:   "consume [telemetry|event] [message endpoint uri] [tenant]",
 		Short: "Consume and print messages",
 		Long:  `Consume messages from the endpoint and print it on the console.`,
-		Args: func(cmd *cobra.Command, args []string) error { 
+		Args: func(cmd *cobra.Command, args []string) error {
 			cobra.ExactArgs(3)
-			if len(args) != 3{
-				return errors.New("Wrong number of Input arguments expected 3 got "+strconv.Itoa(len(args)))
+			if len(args) != 3 {
+				return errors.New("Wrong number of Input arguments expected 3 got " + strconv.Itoa(len(args)))
 			}
-			if (tlsConn == false && insecure == true) {
-				return errors.New("Cannot have an insecure TLS connection without TLS enabled")
-			}
-			return nil; 
+			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := consume(args[0], args[1], args[2]); err != nil {
@@ -149,17 +158,17 @@ func main() {
 
 	cmdConsume.Flags().BoolVarP(&processCommands, "command", "c", false, "Enable commands")
 	cmdConsume.Flags().StringVarP(&commandReader, "reader", "r", "prefill", "Command reader type (possible values: [ondemand, prefill]")
-	cmdConsume.Flags().StringVarP(&clientUsername,"clientUsername","u","","Tenant username")
-	cmdConsume.Flags().StringVarP(&clientPassword,"clientPassword","p","","Tenant password")
+	cmdConsume.Flags().StringVarP(&clientUsername, "username", "u", "", "Tenant username")
+	cmdConsume.Flags().StringVarP(&clientPassword, "password", "p", "", "Tenant password")
+	cmdConsume.Flags().BoolVar(&disableTlsNegotiation, "disable-tls", false, "Disable the TLS negotiation")
 	// root command
 
 	var cmdRoot = &cobra.Command{Use: "hot"}
 	cmdRoot.AddCommand(cmdConsume, cmdPublish)
 
 	cmdRoot.PersistentFlags().StringVarP(&contentTypeFlag, "content-type", "t", "text/plain", "Content type of the payload, may be a MIME type or 'hex'")
-	cmdRoot.PersistentFlags().BoolVarP(&tlsConn,"tlsConn","T",false,"Set to true to enable a secure TLS connection")
-	cmdRoot.PersistentFlags().BoolVarP(&insecure,"insecure","I",false,"Set to true to enable insecure TLS connection")
-	cmdRoot.PersistentFlags().StringVarP(&tlsPath,"tlsPath","P","","Absolute path to cert file")
+	cmdRoot.PersistentFlags().BoolVarP(&insecure, "insecure", "I", false, "Set to true to disable TLS validation")
+	cmdRoot.PersistentFlags().StringVarP(&cert, "cert", "C", "", "Absolute path to cert bundle file in PEM format")
 
 	if err := cmdRoot.Execute(); err != nil {
 		println(err.Error())

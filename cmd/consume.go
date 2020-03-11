@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc
+ * Copyright (c) 2019, 2020 Red Hat Inc
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -50,18 +50,19 @@ func createCommandReader() command.Reader {
 
 func consume(messageType string, uri string, tenant string) error {
 
+	if strings.HasPrefix(uri, "amqps:") && disableTlsNegotiation {
+		return fmt.Errorf("TLS negotiation is explicitly disabled, but URI indicates TLS: %s", uri)
+	}
+
 	fmt.Printf("Consuming %s from %s ...", messageType, uri)
 	fmt.Println()
 
 	opts := make([]amqp.ConnOption, 0)
 
-	//Enable TLS if required
-	if (tlsConn) {
-		opts = append(opts, amqp.ConnTLSConfig(createTlsConfig()))
-	}
-	
-	//Enable Client credentials if avaliable
-	if(clientUsername != "" && clientPassword !=""){
+	opts = append(opts, amqp.ConnTLSConfig(createTlsConfig()))
+
+	//Enable Client credentials if available
+	if clientUsername != "" && clientPassword != "" {
 		opts = append(opts, amqp.ConnSASLPlain(clientUsername, clientPassword))
 	}
 
