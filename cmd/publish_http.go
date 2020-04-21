@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc
+ * Copyright (c) 2019, 2020 Red Hat Inc
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -31,6 +31,10 @@ type HttpPublishInformation struct {
 }
 
 func publishHttp(info HttpPublishInformation, encoder encoding.PayloadEncoder, payload string) error {
+
+	if err := validateMessageType(info.MessageType); err != nil {
+		return err
+	}
 
 	url, err := neturl.Parse(info.URI)
 	if err != nil {

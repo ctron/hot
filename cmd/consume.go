@@ -50,6 +50,10 @@ func createCommandReader() command.Reader {
 
 func consume(messageType string, uri string, tenant string) error {
 
+	if err := validateMessageType(messageType); err != nil {
+		return err
+	}
+
 	if strings.HasPrefix(uri, "amqps:") && disableTlsNegotiation {
 		return fmt.Errorf("TLS negotiation is explicitly disabled, but URI indicates TLS: %s", uri)
 	}

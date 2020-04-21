@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc
+ * Copyright (c) 2019, 2020 Red Hat Inc
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -26,6 +26,10 @@ type MqttPublishInformation struct {
 }
 
 func publishMqtt(info MqttPublishInformation, encoder encoding.PayloadEncoder, payload string) error {
+
+	if err := validateMessageType(info.MessageType); err != nil {
+		return err
+	}
 
 	opts := MQTT.NewClientOptions()
 	opts.AddBroker(info.URI)
