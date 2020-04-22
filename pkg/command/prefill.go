@@ -26,10 +26,11 @@ import (
 // pre fill reader
 
 type PreFillReader struct {
-	Stream  io.Reader
-	Prompt  io.Writer
-	Encoder encoding.PayloadEncoder
-	cmd     chan Command
+	CommandName string
+	Stream      io.Reader
+	Prompt      io.Writer
+	Encoder     encoding.PayloadEncoder
+	cmd         chan Command
 }
 
 func (r *PreFillReader) prompt() {
@@ -66,7 +67,7 @@ func (r *PreFillReader) Start() error {
 		}
 
 		cmd := Command{
-			Command:     "CLI",
+			Command:     r.CommandName,
 			ContentType: r.Encoder.GetMimeType(),
 			Payload:     payload,
 		}
@@ -92,7 +93,7 @@ func (r *PreFillReader) Stop() error {
 	return nil
 }
 
-func (r *PreFillReader) Read(ctx context.Context, deviceId string) *Command {
+func (r *PreFillReader) Read(ctx context.Context, _ string) *Command {
 	select {
 	case cmd := <-r.cmd:
 		return &cmd

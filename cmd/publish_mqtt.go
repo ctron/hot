@@ -14,9 +14,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/ctron/hot/pkg/encoding"
-
+	"github.com/ctron/hot/pkg/utils"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"time"
 )
 
 type MqttPublishInformation struct {
@@ -57,11 +59,49 @@ func publishMqtt(info MqttPublishInformation, encoder encoding.PayloadEncoder, p
 
 	defer client.Disconnect(250)
 
+	// set up command handler
+
+	var response chan struct{} = nil
+	if ttd > 0 {
+		fmt.Println("Subscribing to command topic ... ")
+		response = make(chan struct{})
+		subToken := client.Subscribe("command///req/#", 0, func(client MQTT.Client, message MQTT.Message) {
+			utils.PrintStart()
+
+			utils.PrintTitle("Headers")
+			utils.PrintEntry("Topic", message.Topic())
+			utils.PrintEntry("QoS", message.Qos())
+			utils.PrintEntry("MessageID", message.MessageID())
+			utils.PrintEntry("Ack", message.Ack)
+			utils.PrintEntry("Duplicate", message.Duplicate())
+			utils.PrintEntry("Retained", message.Retained())
+
+			utils.PrintTitle("Payload")
+			fmt.Println(message.Payload())
+
+			utils.PrintEnd()
+
+			response <- struct{}{}
+		})
+		if subToken.WaitTimeout(time.Second*10) && subToken.Error() != nil {
+			return subToken.Error()
+		}
+		fmt.Println("Subscribing to command topic ... OK!")
+	}
+
 	// publish
 
 	token := client.Publish(topic, byte(info.QoS), false, buf.Bytes())
-	if token.Wait() && token.Error() != nil {
+	if token.WaitTimeout(time.Second*10) && token.Error() != nil {
 		return token.Error()
+	}
+
+	if response != nil {
+		select {
+		case <-time.After(time.Second * time.Duration(ttd)):
+			fmt.Println("No command received in time")
+		case <-response:
+		}
 	}
 
 	// done

@@ -28,10 +28,11 @@ import (
 // on demand reader
 
 type OnDemandReader struct {
-	Stream  io.Reader
-	Prompt  io.Writer
-	Encoder encoding.PayloadEncoder
-	reader  async.Reader
+	CommandName string
+	Stream      io.Reader
+	Prompt      io.Writer
+	Encoder     encoding.PayloadEncoder
+	reader      async.Reader
 }
 
 func (r *OnDemandReader) Start() error {
@@ -43,7 +44,7 @@ func (r *OnDemandReader) Stop() error {
 	return r.reader.Close()
 }
 
-func (r *OnDemandReader) Read(ctx context.Context, deviceId string) *Command {
+func (r *OnDemandReader) Read(ctx context.Context, _ string) *Command {
 
 	if r.Prompt != nil {
 		deadline, ok := ctx.Deadline()
@@ -67,7 +68,7 @@ func (r *OnDemandReader) Read(ctx context.Context, deviceId string) *Command {
 		}
 
 		return &Command{
-			Command:     "CLI",
+			Command:     r.CommandName,
 			ContentType: r.Encoder.GetMimeType(),
 			Payload:     p,
 		}
