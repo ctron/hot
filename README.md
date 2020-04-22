@@ -91,6 +91,10 @@ The following flags are supported:
 <dt><code>--qos</code></dt>
 <dd>Set the "Quality of Service". Defaults to <code>0</code>.</dd>
 
+<dt><code>--ttd</code></dt>
+<dd>Set the "time till disconnect", the amount of seconds the MQTT call will
+wait for a command to the device</dd>
+
 </dl>
 
 
