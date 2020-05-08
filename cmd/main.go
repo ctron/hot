@@ -16,7 +16,9 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -27,13 +29,15 @@ import (
 )
 
 var insecure bool
-var cert string = ""
-var clientUsername string = ""
-var clientPassword string = ""
-var contentTypeFlag string = "text/plain"
-var commandReader string = ""
-var processCommands string = "TEST"
-var disableTlsNegotiation bool = false
+var cert = ""
+var clientKey = ""
+var clientCert = ""
+var username = ""
+var password = ""
+var contentTypeFlag = "text/plain"
+var commandReader = ""
+var processCommands = "TEST"
+var disableTlsNegotiation = false
 var ttd uint32 = 0
 var qos uint8 = 0
 
@@ -62,11 +66,66 @@ func createTlsConfig() *tls.Config {
 
 	}
 
-	// return result
+	// build result
 
-	return &tls.Config{
+	result := &tls.Config{
 		RootCAs: caCertPool,
 	}
+
+	// load client cert
+
+	clientCerts, err := loadClientCerts()
+	if err != nil {
+		log.Fatal("Failed to load client certificates: ", err)
+	}
+
+	result.Certificates = clientCerts
+
+	// return result
+
+	return result
+}
+
+func loadClientCerts() ([]tls.Certificate, error) {
+
+	if clientKey == "" || clientCert == "" {
+		return nil, nil
+	}
+
+	// key
+
+	keyFile, err := ioutil.ReadFile(clientKey)
+	if err != nil {
+		return nil, err
+	}
+
+	keyBlock, _ := pem.Decode(keyFile)
+	if keyBlock == nil {
+		return nil, fmt.Errorf("failed to parse PEM key file: %s", keyFile)
+	}
+
+	key, err := x509.ParsePKCS8PrivateKey(keyBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse private key: %w", err)
+	}
+
+	// certificate
+
+	certFile, err := ioutil.ReadFile(clientCert)
+	if err != nil {
+		return nil, err
+	}
+
+	certBlock, _ := pem.Decode(certFile)
+	if certBlock == nil {
+		return nil, fmt.Errorf("failed to parse PEM cert file: %s", keyFile)
+	}
+
+	// certificate
+
+	return []tls.Certificate{
+		{Certificate: [][]byte{certBlock.Bytes}, PrivateKey: key},
+	}, nil
 }
 
 func getEncoder() encoding.PayloadEncoder {
@@ -76,7 +135,7 @@ func getEncoder() encoding.PayloadEncoder {
 func main() {
 
 	cmdConsume := &cobra.Command{
-		Use:   "consume [message endpoint uri] [tenant]",
+		Use:   "consume <message endpoint uri> <tenant>",
 		Short: "Consume and print messages",
 		Long:  `Consume messages from the endpoint and print it on the console.`,
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -99,9 +158,9 @@ func main() {
 	}
 
 	cmdPublishHttp := &cobra.Command{
-		Use:   "http [telemetry|event] [http endpoint uri] [tenant] [deviceId] [authId] [password] [payload]",
+		Use:   "http <telemetry|event> <http endpoint uri> <tenant> <deviceId> [payload]",
 		Short: "Publish via HTTP",
-		Args:  cobra.ExactArgs(7),
+		Args:  cobra.ExactArgs(5),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := publishHttp(HttpPublishInformation{
 				CommonPublishInformation: CommonPublishInformation{
@@ -109,18 +168,18 @@ func main() {
 					URI:              args[1],
 					Tenant:           args[2],
 					DeviceId:         args[3],
-					AuthenticationId: args[4],
-					Password:         args[5],
+					AuthenticationId: username,
+					Password:         password,
 				},
 				QoS: qos,
-			}, getEncoder(), args[6]); err != nil {
+			}, getEncoder(), args[4]); err != nil {
 				log.Fatal("Failed to publish via HTTP:", err)
 			}
 		},
 	}
 
 	cmdPublishMqtt := &cobra.Command{
-		Use:   "mqtt [telemetry|event] [mqtt endpoint uri] [tenant] [deviceId] [authId] [password] [payload]",
+		Use:   "mqtt <telemetry|event> <mqtt endpoint uri> <tenant> <deviceId> <payload>",
 		Short: "Publish via MQTT",
 		Args:  cobra.ExactArgs(7),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -130,11 +189,11 @@ func main() {
 					URI:              args[1],
 					Tenant:           args[2],
 					DeviceId:         args[3],
-					AuthenticationId: args[4],
-					Password:         args[5],
+					AuthenticationId: username,
+					Password:         password,
 				},
 				QoS: qos,
-			}, getEncoder(), args[6]); err != nil {
+			}, getEncoder(), args[4]); err != nil {
 				log.Fatal("Failed to publish via MQTT:", err)
 			}
 		},
@@ -160,8 +219,6 @@ func main() {
 	cmdConsume.Flags().StringVarP(&processCommands, "command", "c", "TEST", "Enable commands (pass the name of the command)")
 	cmdConsume.Flags().Lookup("command").NoOptDefVal = "TEST"
 	cmdConsume.Flags().StringVarP(&commandReader, "reader", "r", "prefill", "Command reader type (possible values: [ondemand, prefill, static:<payload>]")
-	cmdConsume.Flags().StringVarP(&clientUsername, "username", "u", "", "Tenant username")
-	cmdConsume.Flags().StringVarP(&clientPassword, "password", "p", "", "Tenant password")
 	cmdConsume.Flags().BoolVar(&disableTlsNegotiation, "disable-tls", false, "Disable the TLS negotiation")
 
 	// root command
@@ -171,7 +228,12 @@ func main() {
 
 	cmdRoot.PersistentFlags().StringVarP(&contentTypeFlag, "content-type", "t", "text/plain", "Content type of the payload, may be a MIME type or 'hex'")
 	cmdRoot.PersistentFlags().BoolVarP(&insecure, "insecure", "I", false, "Set to true to disable TLS validation")
-	cmdRoot.PersistentFlags().StringVarP(&cert, "cert", "C", "", "Absolute path to cert bundle file in PEM format")
+	cmdRoot.PersistentFlags().StringVarP(&cert, "cert", "C", "", "Path to cert bundle file in PEM format")
+	cmdRoot.PersistentFlags().StringVar(&clientCert, "client-cert", "", "Path to a certificate in PEM format for client authentication")
+	cmdRoot.PersistentFlags().StringVar(&clientKey, "client-key", "", "Path to a key in PEM format for client authentication")
+
+	cmdRoot.PersistentFlags().StringVarP(&username, "username", "u", "", "Username")
+	cmdRoot.PersistentFlags().StringVarP(&password, "password", "p", "", "Password")
 
 	if err := cmdRoot.Execute(); err != nil {
 		println(err.Error())

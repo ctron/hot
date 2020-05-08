@@ -83,8 +83,8 @@ func consume(uri string, tenant string) error {
 	opts = append(opts, amqp.ConnTLSConfig(createTlsConfig()))
 
 	// Enable Client credentials if available
-	if clientUsername != "" && clientPassword != "" {
-		opts = append(opts, amqp.ConnSASLPlain(clientUsername, clientPassword))
+	if username != "" && password != "" {
+		opts = append(opts, amqp.ConnSASLPlain(username, password))
 	}
 
 	client, err := amqp.Dial(uri, opts...)
