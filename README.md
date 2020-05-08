@@ -2,6 +2,49 @@
 
 This is a simple command line tool for testing Eclipse Hono™.
 
+## Authentication
+
+### Username and password
+
+You can set the username and password for all operations using the `--username`
+and `--password` parameters.
+
+When publishing data the username is normally a combination of `<auth-id>@<tenant>`.
+As you are already providing the tenant, you can use the `--auth-id` parameter
+instead, which will internally generate the correct user name, by adding the
+tenant suffix. 
+
+<dl>
+<dt><code>--auth-id,-a</code></dt>
+<dd>The username to use for authenticating with the backend.</dd>
+<dt><code>--username,-u</code></dt>
+<dd>The full username to use for authenticating with the backend.</dd>
+<dt><code>--password,-p</code></dt>
+<dd>The password to use for authenticating with the backend.</dd>
+</dl>
+
+Assuming you have a tenant `foo` and an authentication id of `auth1`, then
+you can use either:
+
+    --username auth1@foo
+
+Or:
+
+    --auth-id auth1
+
+### X.509 client certificates
+
+It is possible to use X.509 client certificates, instead of
+username/password authentication. For this you can use the parameters:
+
+<dl>
+<dt><code>--client-key</code></dt>
+<dd>The path to an X.509 PKCS#8 encoded private key</dd>
+<dt><code>--client-cert</code></dt>
+<dd>The path to an file containing a PEM encoded client certificate chain</dd>
+</dl>
+
+
 ## Start a test consumer
 
 Fill in your connection information, and then execute the following command:
@@ -24,12 +67,6 @@ You can use the following flags:
 
 <dt><code>--cert</code></dt>
 <dd>Path to the certificate bundle in PEM format (overrides system CA certs)</dd>
-
-<dt><code>--username</code></dt>
-<dd>Tenant username (if required)</dd>
-
-<dt><code>--password</code></dt>
-<dd>Tenant password (if required)</dd>
 
 </dl>
 
@@ -63,9 +100,9 @@ The following readers are available:
 
 Fill in your connection information, and then execute the following command:
 
-    hot publish http telemety https://my.server tenant device auth password payload
+    hot publish http telemety https://my.server tenant device payload --username auth --password password
 
-The following flags are supported:
+The following additional flags are supported:
 
 <dl>
 
@@ -82,9 +119,9 @@ wait for a command to the device</dd>
 
 Fill in your connection information, and then execute the following command:
 
-    hot publish mqtt telemety ssl://my.server tenant device auth password payload
+    hot publish mqtt telemety ssl://my.server tenant device payload
 
-The following flags are supported:
+The following additional flags are supported:
 
 <dl>
 
@@ -97,10 +134,9 @@ wait for a command to the device</dd>
 
 </dl>
 
-
 ## Building
 
-Building requires Go 1.12.x. You can build the binary by executing:
+Building requires Go 1.13.x. You can build the binary by executing:
 
     GO111MODULE=on go build -o hot ./cmd
 

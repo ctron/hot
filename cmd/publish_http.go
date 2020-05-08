@@ -59,7 +59,9 @@ func publishHttp(info HttpPublishInformation, encoder encoding.PayloadEncoder, p
 		return err
 	}
 
-	request.SetBasicAuth(info.Username(), info.Password)
+	if info.HasUsernamePassword() {
+		request.SetBasicAuth(info.EffectiveUsername(), info.Password)
+	}
 
 	if qos > 0 {
 		request.Header.Set("QoS-Level", strconv.Itoa(int(qos)))

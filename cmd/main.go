@@ -32,6 +32,7 @@ var insecure bool
 var cert = ""
 var clientKey = ""
 var clientCert = ""
+var authId = ""
 var username = ""
 var password = ""
 var contentTypeFlag = "text/plain"
@@ -116,15 +117,26 @@ func loadClientCerts() ([]tls.Certificate, error) {
 		return nil, err
 	}
 
-	certBlock, _ := pem.Decode(certFile)
-	if certBlock == nil {
-		return nil, fmt.Errorf("failed to parse PEM cert file: %s", keyFile)
+	var certs = make([][]byte, 0)
+	var certBlock *pem.Block
+	rest := certFile
+	for {
+		certBlock, rest = pem.Decode(rest)
+		if certBlock != nil {
+			certs = append(certs, certBlock.Bytes)
+		} else {
+			break
+		}
+	}
+
+	if len(certs) <= 0 {
+		return nil, fmt.Errorf("unable to find any certificates in: %s", keyFile)
 	}
 
 	// certificate
 
 	return []tls.Certificate{
-		{Certificate: [][]byte{certBlock.Bytes}, PrivateKey: key},
+		{Certificate: certs, PrivateKey: key},
 	}, nil
 }
 
@@ -168,7 +180,8 @@ func main() {
 					URI:              args[1],
 					Tenant:           args[2],
 					DeviceId:         args[3],
-					AuthenticationId: username,
+					AuthenticationId: authId,
+					Username:         username,
 					Password:         password,
 				},
 				QoS: qos,
@@ -181,7 +194,7 @@ func main() {
 	cmdPublishMqtt := &cobra.Command{
 		Use:   "mqtt <telemetry|event> <mqtt endpoint uri> <tenant> <deviceId> <payload>",
 		Short: "Publish via MQTT",
-		Args:  cobra.ExactArgs(7),
+		Args:  cobra.ExactArgs(5),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := publishMqtt(MqttPublishInformation{
 				CommonPublishInformation: CommonPublishInformation{
@@ -189,7 +202,8 @@ func main() {
 					URI:              args[1],
 					Tenant:           args[2],
 					DeviceId:         args[3],
-					AuthenticationId: username,
+					AuthenticationId: authId,
+					Username:         username,
 					Password:         password,
 				},
 				QoS: qos,
@@ -232,8 +246,9 @@ func main() {
 	cmdRoot.PersistentFlags().StringVar(&clientCert, "client-cert", "", "Path to a certificate in PEM format for client authentication")
 	cmdRoot.PersistentFlags().StringVar(&clientKey, "client-key", "", "Path to a key in PEM format for client authentication")
 
-	cmdRoot.PersistentFlags().StringVarP(&username, "username", "u", "", "Username")
-	cmdRoot.PersistentFlags().StringVarP(&password, "password", "p", "", "Password")
+	cmdRoot.PersistentFlags().StringVarP(&authId, "auth-id", "a", "", "Authentication ID for authenticating with the backend")
+	cmdRoot.PersistentFlags().StringVarP(&username, "username", "u", "", "Full username for authenticating with the backend")
+	cmdRoot.PersistentFlags().StringVarP(&password, "password", "p", "", "Password for authenticating with the backend")
 
 	if err := cmdRoot.Execute(); err != nil {
 		println(err.Error())

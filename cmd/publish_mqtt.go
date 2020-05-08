@@ -36,8 +36,8 @@ func publishMqtt(info MqttPublishInformation, encoder encoding.PayloadEncoder, p
 	opts := MQTT.NewClientOptions()
 	opts.AddBroker(info.URI)
 	opts.SetClientID(info.DeviceId)
-	if info.AuthenticationId != "" {
-		opts.SetUsername(info.Username())
+	if info.HasUsernamePassword() {
+		opts.SetUsername(info.EffectiveUsername())
 		opts.SetPassword(info.Password)
 	}
 	opts.SetCleanSession(true)

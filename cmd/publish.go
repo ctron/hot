@@ -20,9 +20,18 @@ type CommonPublishInformation struct {
 	DeviceId    string
 
 	AuthenticationId string
+	Username         string
 	Password         string
 }
 
-func (c *CommonPublishInformation) Username() string {
-	return c.AuthenticationId + "@" + c.Tenant
+func (c CommonPublishInformation) HasUsernamePassword() bool {
+	return c.Password != "" || c.Username != "" || c.AuthenticationId != ""
+}
+
+func (c CommonPublishInformation) EffectiveUsername() string {
+	if c.Username != "" {
+		return c.Username
+	} else {
+		return c.AuthenticationId + "@" + c.Tenant
+	}
 }
