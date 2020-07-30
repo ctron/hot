@@ -16,7 +16,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"time"
@@ -28,6 +29,8 @@ import (
 	"github.com/ctron/hot/pkg/utils"
 	"pack.ag/amqp"
 )
+
+var amqpHostname string
 
 func createCommandReader(commandName string) (command.Reader, error) {
 	lower := strings.ToLower(commandReader)
@@ -84,12 +87,21 @@ func consume(uri string, tenant string) error {
 
 	// Enable Client credentials if available
 	if username != "" && password != "" {
+		log.Debug("Adding SASL(PLAIN)")
 		opts = append(opts, amqp.ConnSASLPlain(username, password))
+	} else {
+		log.Debug("Adding SASL(ANONYMOUS)")
+		opts = append(opts, amqp.ConnSASLAnonymous())
+	}
+
+	if amqpHostname != "" {
+		log.Debug("Adding explicit hostname: ", amqpHostname)
+		opts = append(opts, amqp.ConnServerHostname(amqpHostname))
 	}
 
 	client, err := amqp.Dial(uri, opts...)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Failed connecting to endpoint")
 	}
 
 	defer func() {

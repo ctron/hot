@@ -4,8 +4,8 @@ all: build
 .PHONY: build
 build: hot
 
-hot: $(shell find . -name "*.go")
-	go build -o $@ ./cmd
+hot: $(shell find . -name "*.go") go.mod go.sum
+	go build -mod=vendor -o $@ ./cmd
 
 .PHONY: clean
 

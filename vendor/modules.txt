@@ -5,16 +5,22 @@ github.com/eclipse/paho.mqtt.golang/packets
 github.com/google/uuid
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
+# github.com/konsorten/go-windows-terminal-sequences v1.0.3
+github.com/konsorten/go-windows-terminal-sequences
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
+# github.com/sirupsen/logrus v1.6.0
+github.com/sirupsen/logrus
 # github.com/spf13/cobra v0.0.5
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
 # golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
+golang.org/x/net/internal/socks
 golang.org/x/net/proxy
 golang.org/x/net/websocket
-golang.org/x/net/internal/socks
+# golang.org/x/sys v0.0.0-20190422165155-953cdadca894
+golang.org/x/sys/unix
 # pack.ag/amqp v0.12.0
 pack.ag/amqp
 pack.ag/amqp/internal/testconn

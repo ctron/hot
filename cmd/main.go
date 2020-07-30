@@ -19,8 +19,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"strconv"
 
 	"github.com/ctron/hot/pkg/encoding"
@@ -41,6 +41,7 @@ var processCommands = "TEST"
 var disableTlsNegotiation = false
 var ttd uint32 = 0
 var qos uint8 = 0
+var logLevel = log.WarnLevel.String()
 
 func createTlsConfig() *tls.Config {
 
@@ -234,6 +235,7 @@ func main() {
 	cmdConsume.Flags().Lookup("command").NoOptDefVal = "TEST"
 	cmdConsume.Flags().StringVarP(&commandReader, "reader", "r", "prefill", "Command reader type (possible values: [ondemand, prefill, static:<payload>]")
 	cmdConsume.Flags().BoolVar(&disableTlsNegotiation, "disable-tls", false, "Disable the TLS negotiation")
+	cmdConsume.Flags().StringVar(&amqpHostname, "hostname", "", "AMQP hostname")
 
 	// root command
 
@@ -249,6 +251,16 @@ func main() {
 	cmdRoot.PersistentFlags().StringVarP(&authId, "auth-id", "a", "", "Authentication ID for authenticating with the backend")
 	cmdRoot.PersistentFlags().StringVarP(&username, "username", "u", "", "Full username for authenticating with the backend")
 	cmdRoot.PersistentFlags().StringVarP(&password, "password", "p", "", "Password for authenticating with the backend")
+
+	cmdRoot.PersistentFlags().StringVarP(&logLevel, "log", "l", log.WarnLevel.String(), "Log level (levels: trace, debug, info, warn, error, fatal, panic)")
+
+	cmdRoot.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		l, err := log.ParseLevel(logLevel)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.SetLevel(l)
+	}
 
 	if err := cmdRoot.Execute(); err != nil {
 		println(err.Error())
