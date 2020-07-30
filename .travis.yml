@@ -4,7 +4,7 @@ dist: xenial
 
 matrix:
   include:
-    - go: "1.13"
+    - go: "1.14"
       env: LATEST=true
 
 before_install:

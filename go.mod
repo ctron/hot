@@ -16,4 +16,4 @@ require (
 	pack.ag/amqp v0.12.0
 )
 
-go 1.13
+go 1.14
