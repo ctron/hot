@@ -9,6 +9,7 @@ require (
 	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/google/uuid v1.1.1
+	github.com/mitchellh/gox v1.0.1 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.5
